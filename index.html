@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Araç Yükleme – Kiosk</title>
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 10px 24px rgba(0,0,0,.08);
+      --shadowHover: 0 14px 30px rgba(0,0,0,.10);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app{ min-height:100%; display:flex; flex-direction:column; }
+
+    header{
+      padding: 18px 22px 10px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .title{ display:flex; flex-direction:column; gap:6px; }
+    .title h1{ margin:0; font-size:26px; letter-spacing:.2px; font-weight:800; }
+
+    .clock{
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,.7);
+      backdrop-filter: blur(6px);
+      white-space:nowrap;
+    }
+
+    main{ flex:1; padding: 12px 22px 22px; }
+
+    .grid{
+      display:grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Desktop grid */
+    @media (min-width: 1100px){
+      .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1500px){
+      .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    /* ✅ Mobil: tek sütun + daha büyük yazılar */
+    @media (max-width: 720px){
+      header{ padding: 14px 14px 8px; align-items:flex-start; }
+      .title h1{ font-size: 22px; }
+      main{ padding: 10px 14px 16px; }
+      .grid{ grid-template-columns: 1fr; }
+      .clock{ font-size: 13px; padding: 8px 10px; border-radius: 12px; }
+    }
+
+    .cardBtn{
+      position:relative;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      text-align:left;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      min-height: 150px;
+      width: 100%;
+      touch-action: manipulation;
+    }
+    .cardBtn:hover{
+      transform: translateY(-2px);
+      box-shadow: var(--shadowHover);
+      border-color: #d1d5db;
+    }
+    .cardBtn:active{ transform: translateY(0px) scale(.99); }
+    .cardBtn:focus{
+      outline: 3px solid rgba(17,24,39,.15);
+      outline-offset: 2px;
+    }
+
+    .truckBg{
+      position:absolute;
+      right: 14px;
+      top: 12px;
+      width: 120px;
+      height: 120px;
+      opacity: .10;
+      pointer-events:none;
+      color:#111827;
+    }
+
+    .topLine{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .badge{
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: #111827;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(249,250,251,.8);
+      white-space:nowrap;
+    }
+
+    .plate{
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: .5px;
+      margin: 2px 0 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ✅ Mobilde plaka taşmasın */
+    @media (max-width: 720px){
+      .plate{ font-size: 24px; }
+      .truckBg{ width: 96px; height: 96px; right: 10px; top: 10px; }
+      .badge{ font-size: 11px; padding: 6px 9px; }
+    }
+
+    .row{ display:flex; flex-direction:column; gap: 4px; }
+    .label{ color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .2px; }
+    .value{ font-size: 18px; font-weight: 800; }
+
+    /* ✅ Sevk (yeşil) */
+    .cardBtn.sent{
+      border-color: rgba(16,185,129,.70);
+      background: rgba(16,185,129,.12);
+      box-shadow:
+        0 16px 34px rgba(16,185,129,.18),
+        0 10px 24px rgba(0,0,0,.06);
+    }
+    .cardBtn.sent .badge{
+      border-color: rgba(16,185,129,.75);
+      background: rgba(16,185,129,.18);
+      color: #064e3b;
+    }
+    .cardBtn.sent .label{ color: rgba(6,78,59,.70); }
+    .cardBtn.sent .truckBg{ opacity: .14; color: rgba(6,78,59,.65); }
+    .cardBtn.sent::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      box-shadow: inset 0 0 0 3px rgba(16,185,129,.35);
+      pointer-events:none;
+    }
+
+    /* ✅ İptal (kırmızı) */
+    .cardBtn.canceled{
+      border-color: rgba(239,68,68,.70);
+      background: rgba(239,68,68,.10);
+      box-shadow:
+        0 16px 34px rgba(239,68,68,.16),
+        0 10px 24px rgba(0,0,0,.06);
+    }
+    .cardBtn.canceled .badge{
+      border-color: rgba(239,68,68,.75);
+      background: rgba(239,68,68,.14);
+      color: #7f1d1d;
+    }
+    .cardBtn.canceled .label{ color: rgba(127,29,29,.70); }
+    .cardBtn.canceled .truckBg{ opacity: .14; color: rgba(127,29,29,.60); }
+    .cardBtn.canceled::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: var(--radius);
+      box-shadow: inset 0 0 0 3px rgba(239,68,68,.30);
+      pointer-events:none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>Araç Seçimi</h1>
+      </div>
+      <div class="clock" id="clock">--:--:--</div>
+    </header>
+
+    <main>
+      <div class="grid" id="grid"></div>
+    </main>
+  </div>
+
+  <script>
+    const trucks = [
+      { firma:"Murat Lojistik", plaka:"34 LSFRE 01", sofor:"Önder Can",   tel:"0531 123 45 56" },
+      { firma:"Murat Lojistik", plaka:"06 MRL 247",   sofor:"Emre Kılıç",  tel:"0532 408 19 73" },
+      { firma:"Murat Lojistik", plaka:"01 ADN 908",   sofor:"Sefa Yılmaz", tel:"0533 775 20 14" },
+      { firma:"Murat Lojistik", plaka:"16 BRS 112",   sofor:"Serkan Demir",tel:"0534 612 08 95" },
+      { firma:"Murat Lojistik", plaka:"07 ANT 551",   sofor:"Alihan Koç",  tel:"0535 940 33 21" },
+      { firma:"Murat Lojistik", plaka:"35 IZM 304",   sofor:"Furkan Şahin",tel:"0536 281 77 66" },
+      { firma:"Murat Lojistik", plaka:"27 GAZ 778",   sofor:"Mert Aydın",  tel:"0537 505 44 09" },
+      { firma:"Murat Lojistik", plaka:"33 MRS 019",   sofor:"Hakan Arslan",tel:"0538 166 58 42" },
+      { firma:"Murat Lojistik", plaka:"42 KON 650",   sofor:"Oğuzhan Kaya",tel:"0539 392 11 87" },
+      { firma:"Murat Lojistik", plaka:"38 KYS 436",   sofor:"Burak Çetin", tel:"0540 721 06 53" },
+    ];
+
+    const truckSvg = `
+      <svg class="truckBg" viewBox="0 0 64 64" aria-hidden="true">
+        <path fill="currentColor" d="M6 18a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v18h2.5c1.1 0 2-.9 2-2v-8.7c0-1 .7-1.9 1.7-2.1l7-1.6c.3-.1.7-.1 1 0l3.2.8c1 .3 1.7 1.2 1.7 2.2V34c0 4.4-3.6 8-8 8H14a8 8 0 0 1-8-8V18zM44 28h10v-3.2l-2.2-.6-7.8 1.8V28z"/>
+        <path fill="currentColor" d="M16 50a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm32 0a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/>
+        <path fill="currentColor" d="M12 40h36a2 2 0 0 1 0 4H12a2 2 0 0 1 0-4z"/>
+      </svg>
+    `;
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function createCard(item, index){
+      const btn = document.createElement("button");
+      btn.className = "cardBtn";
+      btn.type = "button";
+      btn.setAttribute("data-index", index);
+
+      const canceled = localStorage.getItem(`truck_cancel_${item.plaka}`) === "true";
+      const sent     = localStorage.getItem(`truck_sent_${item.plaka}`) === "true";
+
+      if(canceled) btn.classList.add("canceled");
+      else if(sent) btn.classList.add("sent");
+
+      const statusText = canceled ? "İptal" : (sent ? "Sevk Edildi" : "Araç");
+
+      btn.innerHTML = `
+        ${truckSvg}
+        <div class="topLine">
+          <div class="badge">${escapeHtml(item.firma)}</div>
+          <div class="badge">${statusText}</div>
+        </div>
+
+        <div class="plate">${escapeHtml(item.plaka)}</div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="label">Şoför</div>
+          <div class="value">${escapeHtml(item.sofor)}</div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="label">Telefon</div>
+          <div class="value">${escapeHtml(item.tel)}</div>
+        </div>
+      `;
+
+      btn.addEventListener("click", () => {
+        const p = new URLSearchParams();
+        p.set("firma", item.firma);
+        p.set("plaka", item.plaka);
+        p.set("sofor", item.sofor);
+        p.set("tel", item.tel);
+        window.location.href = "sevkiyat_form.html?" + p.toString();
+      });
+
+      return btn;
+    }
+
+    function render(){
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+      trucks.forEach((t,i)=> grid.appendChild(createCard(t,i)));
+    }
+
+    function tickClock(){
+      const el = document.getElementById("clock");
+      const now = new Date();
+      el.textContent =
+        `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+    }
+
+    render();
+    tickClock();
+    setInterval(tickClock, 1000);
+  </script>
+</body>
+</html>

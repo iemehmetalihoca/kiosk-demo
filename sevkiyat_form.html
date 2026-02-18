@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sevkiyat Listesi – Kiosk</title>
+
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow: 0 12px 28px rgba(0,0,0,.10);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header{
+      padding: 18px 22px 10px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{display:flex; flex-direction:column; gap:6px}
+    .title h1{margin:0; font-size:26px; font-weight:950}
+
+    .clock{
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 14px;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,.7);
+      backdrop-filter: blur(6px);
+      white-space:nowrap;
+    }
+
+    main{
+      padding: 12px 22px 92px;
+      display:grid;
+      gap:16px;
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .topBar{
+      padding: 14px 16px;
+      border-bottom:1px solid var(--border);
+      background: rgba(249,250,251,.65);
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .badges{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    .badge{
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.6px;
+      text-transform: uppercase;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:8px 12px;
+      background:#fff;
+      white-space:nowrap;
+    }
+    .plate{
+      font-size:18px;
+      font-weight:1000;
+      letter-spacing:.6px;
+      font-variant-numeric: tabular-nums;
+      padding:8px 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      white-space:nowrap;
+    }
+
+    .rightBar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+
+    .btn{
+      height:44px;
+      padding:0 14px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.06);
+      touch-action: manipulation;
+    }
+    .btn:active{transform: scale(.99)}
+
+    .tableWrap{overflow:auto}
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width: 1150px;
+    }
+    thead th{
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background:#fff;
+      text-align:left;
+      padding: 14px 12px;
+      border-bottom:1px solid var(--border);
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      font-weight:1000;
+      white-space:nowrap;
+    }
+    tbody td, tfoot td{
+      padding: 14px 12px;
+      border-bottom:1px solid var(--border);
+      font-size:16px;
+      font-weight:900;
+      vertical-align:top;
+    }
+    tbody tr:hover{background: rgba(249,250,251,.65)}
+
+    .num{ text-align:right; font-variant-numeric: tabular-nums; white-space:nowrap; }
+    .center{ text-align:center; }
+
+    .muted{
+      color:var(--muted);
+      font-weight:900;
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .checkBtn{
+      width: 180px;
+      max-width: 100%;
+      height: 46px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.06);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .checkIcon{
+      width:18px; height:18px;
+      border-radius: 6px;
+      border:2px solid rgba(17,24,39,.35);
+      display:inline-block;
+    }
+    .checkBtn[data-done="true"]{
+      border-color: rgba(16,185,129,.55);
+      background: rgba(16,185,129,.10);
+    }
+    .checkBtn[data-done="true"] .checkIcon{
+      background: #10b981;
+      border-color: #10b981;
+      position:relative;
+      box-shadow: 0 8px 18px rgba(16,185,129,.18);
+    }
+    .checkBtn[data-done="true"] .checkIcon::after{
+      content:"";
+      position:absolute;
+      left:5px; top:1px;
+      width:5px; height:10px;
+      border-right:3px solid #ffffff;
+      border-bottom:3px solid #ffffff;
+      transform: rotate(45deg);
+    }
+    .checkBtn[data-done="true"] span:nth-child(2){
+      color: #065f46;
+    }
+
+    .camBtn{
+      height: 44px;
+      min-width: 46px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.06);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      white-space:nowrap;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .camBtn:active{transform: scale(.99)}
+    .camBtn.hasPhoto{
+      border-color: rgba(16,185,129,.55);
+      background: rgba(16,185,129,.10);
+    }
+    .camIcon{ width:18px; height:18px; display:inline-block; }
+    .camHint{
+      font-size:12px;
+      color: var(--muted);
+      font-weight: 900;
+      margin-top: 6px;
+    }
+
+    tfoot td{
+      background: rgba(249,250,251,.88);
+      font-weight:1000;
+    }
+    .totalLabel{
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+    .totalBig{
+      font-size: 18px;
+      font-weight: 1000;
+    }
+
+    .bottomBar{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      padding: 12px 22px;
+      background: rgba(246,247,249,.92);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      z-index: 50;
+    }
+
+    .primaryBtn{
+      height: 54px;
+      min-width: 220px;
+      padding: 0 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(17,24,39,.18);
+      background: #ffffff;
+      color: #111827;
+      font-weight: 1000;
+      letter-spacing: .2px;
+      cursor: pointer;
+      box-shadow: 0 14px 26px rgba(0,0,0,.10);
+      touch-action: manipulation;
+    }
+    .primaryBtn:active{ transform: scale(.99); }
+    .primaryBtn.approved{
+      background: #065f46;
+      border-color: rgba(6,95,70,.70);
+      color: #ffffff;
+      box-shadow: 0 14px 26px rgba(6,95,70,.22);
+    }
+
+    .dangerBtn{
+      height: 54px;
+      min-width: 260px;
+      padding: 0 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(17,24,39,.18);
+      background: #ffffff;
+      color: #111827;
+      font-weight: 1000;
+      letter-spacing: .2px;
+      cursor: pointer;
+      box-shadow: 0 14px 26px rgba(0,0,0,.10);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      touch-action: manipulation;
+    }
+    .dangerBtn:active{ transform: scale(.99); }
+    .dangerBtn.canceled{
+      background: #7f1d1d;
+      border-color: rgba(127,29,29,.75);
+      color: #ffffff;
+      box-shadow: 0 14px 26px rgba(127,29,29,.22);
+    }
+
+    /* ✅ Mobil genel düzen */
+    @media (max-width: 720px){
+      header{ padding: 14px 14px 8px; align-items:flex-start; }
+      .title h1{ font-size: 22px; }
+      main{ padding: 10px 14px 86px; }
+      .topBar{ padding: 12px 12px; }
+      .badge{ font-size: 11px; padding: 7px 10px; }
+      .plate{ font-size: 16px; padding: 7px 10px; border-radius: 12px; }
+
+      /* alt bar: butonlar yan yana sığmazsa sar */
+      .bottomBar{ padding: 10px 14px; gap:10px; }
+      .dangerBtn, .primaryBtn{
+        min-width: 0;
+        width: 50%;
+        border-radius: 14px;
+        height: 52px;
+        padding: 0 12px;
+        font-size: 14px;
+      }
+    }
+
+    /* ✅ Mobil: tablo gizle, kart liste göster */
+    .mobileList{ display:none; }
+    @media (max-width: 900px){
+      .tableWrap{ display:none; }
+      .mobileList{ display:block; padding: 12px; }
+    }
+
+    .mItem{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      background:#fff;
+      box-shadow: 0 10px 18px rgba(0,0,0,.06);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .mTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .mId{
+      font-weight: 1000;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+    .mCustomer{
+      font-weight: 1000;
+      font-size: 16px;
+      margin-top: 2px;
+    }
+    .mMeta{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+    .mBox{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(249,250,251,.6);
+    }
+    .mLbl{ color: var(--muted); font-weight: 900; font-size: 12px; }
+    .mVal{ font-weight: 1000; font-size: 14px; margin-top: 2px; }
+
+    .mActions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .mActions .camBtn{ flex:1; height: 48px; justify-content:center; }
+    .mActions .checkBtn{ flex:1; height: 48px; width:auto; }
+    @media (max-width: 420px){
+      .mMeta{ grid-template-columns: 1fr; }
+      .mActions{ flex-direction:column; }
+      .mActions .camBtn, .mActions .checkBtn{ width:100%; }
+    }
+
+    /* Modal */
+    .modalBack{
+      position: fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .modalBack.show{display:flex;}
+    .modalCard{
+      width: min(720px, 100%);
+      background:#fff;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 24px 60px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .modalTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom:1px solid var(--border);
+      background: rgba(249,250,251,.9);
+    }
+    .modalTitle{ font-weight: 950; letter-spacing:.2px; }
+    .modalClose{
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-weight: 950;
+      cursor:pointer;
+    }
+    .modalBody{ padding: 14px; }
+    .previewImg{
+      width:100%;
+      max-height: 65vh;
+      object-fit: contain;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #f3f4f6;
+    }
+    .modalActions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 12px 14px 14px;
+    }
+    .dangerMini{
+      height: 44px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border:1px solid rgba(153,27,27,.55);
+      background: rgba(153,27,27,.10);
+      color:#7f1d1d;
+      font-weight: 1000;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="title">
+      <h1>Sevkiyat Formu</h1>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="topBar">
+        <div class="badges">
+          <div class="badge" id="firmaBadge">JRAT LOJ.</div>
+          <div class="badge" id="soforBadge">Şoför: -</div>
+          <div class="badge" id="telBadge">Tel: -</div>
+          <div class="plate" id="plakaText">PLAKA</div>
+        </div>
+
+        <div class="rightBar">
+          <button class="btn" type="button" id="backBtn">← Araç Seçimi</button>
+        </div>
+      </div>
+
+      <!-- Desktop/Tablet tablo -->
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Müşteri / Alıcı</th>
+              <th>Şehir</th>
+              <th>İlçe</th>
+              <th>Ürün</th>
+              <th class="center">Palet</th>
+              <th class="center">Palet içi</th>
+              <th class="num">Toplam kg</th>
+              <th class="center">Foto</th>
+              <th class="center">Yollandı mı?</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5"><span class="totalLabel">Toplam</span></td>
+              <td class="center num"><span class="totalBig" id="totalPaletCell">0</span></td>
+              <td class="center num"><span class="totalBig" id="totalPaletIciCell">0</span></td>
+              <td class="num"><span class="totalBig" id="totalKgCell">0,00</span></td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- ✅ Mobil kart liste -->
+      <div class="mobileList" id="mobileList"></div>
+    </section>
+  </main>
+
+  <div class="bottomBar">
+    <button class="dangerBtn" type="button" id="cancelBtn">Araç İptal</button>
+    <button class="primaryBtn" type="button" id="approveBtn">Onayla</button>
+  </div>
+
+  <input id="fileInput" type="file" accept="image/*" capture="environment" style="display:none" />
+
+  <div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+    <div class="modalCard">
+      <div class="modalTop">
+        <div class="modalTitle" id="modalTitle">Foto Önizleme</div>
+        <button class="modalClose" type="button" id="modalClose">Kapat</button>
+      </div>
+      <div class="modalBody">
+        <img id="previewImg" class="previewImg" alt="Foto önizleme" />
+        <div class="camHint" id="modalHint">Bu foto demo olarak localStorage’a kaydolur.</div>
+      </div>
+      <div class="modalActions">
+        <button class="dangerMini" type="button" id="removePhotoBtn">Foto Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function tickClock(){
+      const el = document.getElementById("clock");
+      const n = new Date();
+      el.textContent = `${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}:${String(n.getSeconds()).padStart(2,"0")}`;
+    }
+    tickClock(); setInterval(tickClock, 1000);
+
+    const qs = new URLSearchParams(window.location.search);
+    const firma = qs.get("firma") || "JRAT LOJ.";
+    const plaka = qs.get("plaka") || "34 LSFRE 01";
+    const sofor = qs.get("sofor") || "Önder Can";
+    const tel   = qs.get("tel")   || "0531 123 45 56";
+
+    document.getElementById("firmaBadge").textContent = firma;
+    document.getElementById("plakaText").textContent = plaka;
+    document.getElementById("soforBadge").textContent = "Şoför: " + sofor;
+    document.getElementById("telBadge").textContent   = "Tel: " + tel;
+
+    const rows = [
+      { id: 1, musteri: "URFA TİCARET",    sehir: "Şanlıurfa", ilce: "Suruç",   urun: "Hasmaya 24x500g",           palet: 9,  paletIci: 108, totalKg: 14148.00 },
+      { id: 2, musteri: "ANTAKYA TİCARET", sehir: "Hatay",     ilce: "Antakya", urun: "Özmaya Yaş Maya 24x500g",    palet: 5,  paletIci: 108, totalKg: 14148.00 },
+      { id: 3, musteri: "MAVİ GIDA A.Ş.",  sehir: "Osmaniye",  ilce: "Merkez",  urun: "Özmaya Yaş Maya 24x500g",    palet: 1,  paletIci: 108, totalKg: 14148.00 },
+      { id: 4, musteri: "ABDULLAH TANCAR", sehir: "Gaziantep", ilce: "Merkez",  urun: "Lesafmaya Yaş Maya 24x500g", palet: 12, paletIci: 81,  totalKg: 14148.00 },
+      { id: 5, musteri: "ÖZGÜR YILMAZ",    sehir: "Mersin",    ilce: "Merkez",  urun: "Lesafmaya Yaş Maya 24x500g", palet: 5,  paletIci: 60,  totalKg: 14148.00 }
+    ];
+
+    const doneStorageKey = `sevkiyat_done_${plaka}`;
+    function loadDoneMap(){
+      try{
+        const raw = localStorage.getItem(doneStorageKey);
+        return raw ? JSON.parse(raw) : {};
+      }catch(e){ return {}; }
+    }
+    function saveDoneMap(map){
+      localStorage.setItem(doneStorageKey, JSON.stringify(map));
+    }
+
+    function photoKey(rowId){ return `photo_${plaka}_${rowId}`; }
+
+    function fmtKgTR(n){
+      return Number(n).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function fmtIntTR(n){
+      return Number(n).toLocaleString("tr-TR", { maximumFractionDigits: 0 });
+    }
+    function esc(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function cameraSvg(){
+      return `
+        <svg class="camIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M9.2 4.6c.3-.4.8-.6 1.3-.6h3c.5 0 1 .2 1.3.6l.9 1.1H18c1.7 0 3 1.3 3 3v8.3c0 1.7-1.3 3-3 3H6c-1.7 0-3-1.3-3-3V8.7c0-1.7 1.3-3 3-3h2.3l.9-1.1zM12 18.3a4.4 4.4 0 1 0 0-8.8 4.4 4.4 0 0 0 0 8.8zm0-2a2.4 2.4 0 1 1 0-4.8 2.4 2.4 0 0 1 0 4.8z"/>
+        </svg>
+      `;
+    }
+
+    const modalBack = document.getElementById("modalBack");
+    const previewImg = document.getElementById("previewImg");
+    const modalTitle = document.getElementById("modalTitle");
+    const removePhotoBtn = document.getElementById("removePhotoBtn");
+    let activeRowForPhoto = null;
+
+    function openModal(rowId, dataUrl){
+      activeRowForPhoto = rowId;
+      modalTitle.textContent = `Foto – Satır #${rowId}`;
+      previewImg.src = dataUrl || "";
+      modalBack.classList.add("show");
+    }
+    function closeModal(){
+      modalBack.classList.remove("show");
+      activeRowForPhoto = null;
+      previewImg.src = "";
+    }
+    document.getElementById("modalClose").addEventListener("click", closeModal);
+    modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeModal(); });
+
+    removePhotoBtn.addEventListener("click", ()=>{
+      if(activeRowForPhoto == null) return;
+      if(!confirm("Bu satırın fotoğrafını silmek istiyor musun?")) return;
+      localStorage.removeItem(photoKey(activeRowForPhoto));
+      render();
+      closeModal();
+    });
+
+    const doneMap = loadDoneMap();
+    const tbody = document.getElementById("tbody");
+    const mobileList = document.getElementById("mobileList");
+
+    function render(){
+      tbody.innerHTML = "";
+      mobileList.innerHTML = "";
+
+      let sumKg = 0, sumPalet = 0, sumPaletIci = 0;
+
+      rows.forEach((r) => {
+        sumKg += r.totalKg;
+        sumPalet += Number(r.palet) || 0;
+        sumPaletIci += Number(r.paletIci) || 0;
+
+        const isDone = !!doneMap[r.id];
+        const photo = localStorage.getItem(photoKey(r.id));
+
+        /* Desktop tablo satırı */
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="muted">${r.id}</td>
+          <td><div>${esc(r.musteri)}</div></td>
+          <td>${esc(r.sehir)}</td>
+          <td>${esc(r.ilce)}</td>
+          <td>${esc(r.urun)}</td>
+          <td class="center num">${fmtIntTR(r.palet)}</td>
+          <td class="center num">${fmtIntTR(r.paletIci)}</td>
+          <td class="num">${fmtKgTR(r.totalKg)}</td>
+          <td class="center">
+            <button class="camBtn ${photo ? "hasPhoto" : ""}" type="button" data-photo-row="${r.id}">
+              ${cameraSvg()} <span>${photo ? "✓" : "Foto"}</span>
+            </button>
+            <div class="camHint">${photo ? "foto eklendi" : "kamera/galeri"}</div>
+          </td>
+          <td class="center">
+            <button class="checkBtn" type="button" data-row="${r.id}" data-done="${isDone}">
+              <span class="checkIcon" aria-hidden="true"></span>
+              <span>${isDone ? "Yollandı" : "Yollanmadı"}</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        /* ✅ Mobil kart */
+        const item = document.createElement("div");
+        item.className = "mItem";
+        item.innerHTML = `
+          <div class="mTop">
+            <div>
+              <div class="mId">Satır #${r.id}</div>
+              <div class="mCustomer">${esc(r.musteri)}</div>
+              <div class="muted">${esc(r.sehir)} / ${esc(r.ilce)}</div>
+            </div>
+            <div class="muted">${isDone ? "✓ Yollandı" : "⏳ Bekliyor"}</div>
+          </div>
+
+          <div class="mBox">
+            <div class="mLbl">Ürün</div>
+            <div class="mVal">${esc(r.urun)}</div>
+          </div>
+
+          <div class="mMeta">
+            <div class="mBox">
+              <div class="mLbl">Palet</div>
+              <div class="mVal">${fmtIntTR(r.palet)}</div>
+            </div>
+            <div class="mBox">
+              <div class="mLbl">Palet içi</div>
+              <div class="mVal">${fmtIntTR(r.paletIci)}</div>
+            </div>
+            <div class="mBox" style="grid-column:1/-1;">
+              <div class="mLbl">Toplam kg</div>
+              <div class="mVal">${fmtKgTR(r.totalKg)}</div>
+            </div>
+          </div>
+
+          <div class="mActions">
+            <button class="camBtn ${photo ? "hasPhoto" : ""}" type="button" data-photo-row="${r.id}">
+              ${cameraSvg()} <span>${photo ? "✓ Foto" : "Foto"}</span>
+            </button>
+
+            <button class="checkBtn" type="button" data-row="${r.id}" data-done="${isDone}">
+              <span class="checkIcon" aria-hidden="true"></span>
+              <span>${isDone ? "Yollandı" : "Yollanmadı"}</span>
+            </button>
+          </div>
+          <div class="camHint">${photo ? "foto eklendi" : "kamera/galeri"}</div>
+        `;
+        mobileList.appendChild(item);
+      });
+
+      document.getElementById("totalKgCell").textContent = fmtKgTR(sumKg);
+      document.getElementById("totalPaletCell").textContent = fmtIntTR(sumPalet);
+      document.getElementById("totalPaletIciCell").textContent = fmtIntTR(sumPaletIci);
+
+      wireEvents();
+      refreshApproveUI();
+      refreshCancelUI();
+    }
+
+    const fileInput = document.getElementById("fileInput");
+    let pendingPhotoRow = null;
+
+    function wireEvents(){
+      /* check toggle (hem tablo hem mobil kart) */
+      document.querySelectorAll(".checkBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const rowId = Number(btn.getAttribute("data-row"));
+          const cur = btn.getAttribute("data-done") === "true";
+          const next = !cur;
+
+          doneMap[rowId] = next;
+          saveDoneMap(doneMap);
+          render();
+        });
+      });
+
+      /* foto */
+      document.querySelectorAll("[data-photo-row]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const rowId = Number(btn.getAttribute("data-photo-row"));
+          pendingPhotoRow = rowId;
+
+          const existing = localStorage.getItem(photoKey(rowId));
+          if(existing){ openModal(rowId, existing); return; }
+
+          fileInput.value = "";
+          fileInput.click();
+        });
+      });
+    }
+
+    fileInput.addEventListener("change", ()=>{
+      if(!pendingPhotoRow) return;
+      const file = fileInput.files && fileInput.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          localStorage.setItem(photoKey(pendingPhotoRow), String(reader.result));
+        }catch(e){
+          alert("Foto kaydedilemedi (localStorage dolu olabilir). Daha küçük foto dene.");
+          return;
+        }
+        const dataUrl = localStorage.getItem(photoKey(pendingPhotoRow));
+        render();
+        openModal(pendingPhotoRow, dataUrl);
+        pendingPhotoRow = null;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    /* Sevk (yeşil) */
+    const approveBtn = document.getElementById("approveBtn");
+    function isApproved(){ return localStorage.getItem(`truck_sent_${plaka}`) === "true"; }
+    function setApproved(val){
+      const key = `truck_sent_${plaka}`;
+      const timeKey = `truck_sent_time_${plaka}`;
+      if(val){ localStorage.setItem(key,"true"); localStorage.setItem(timeKey,new Date().toISOString()); }
+      else{ localStorage.removeItem(key); localStorage.removeItem(timeKey); }
+    }
+    function refreshApproveUI(){
+      const approved = isApproved();
+      if(approved){ approveBtn.textContent="Onaylandı ✓"; approveBtn.classList.add("approved"); }
+      else{ approveBtn.textContent="Onayla"; approveBtn.classList.remove("approved"); }
+    }
+
+    /* İptal (kırmızı) */
+    const cancelBtn = document.getElementById("cancelBtn");
+    function isCanceled(){ return localStorage.getItem(`truck_cancel_${plaka}`) === "true"; }
+    function setCanceled(val){
+      const key = `truck_cancel_${plaka}`;
+      const timeKey = `truck_cancel_time_${plaka}`;
+      if(val){ localStorage.setItem(key,"true"); localStorage.setItem(timeKey,new Date().toISOString()); }
+      else{ localStorage.removeItem(key); localStorage.removeItem(timeKey); }
+    }
+    function refreshCancelUI(){
+      const canceled = isCanceled();
+      if(canceled){ cancelBtn.textContent="Araç İptal Edildi ✓"; cancelBtn.classList.add("canceled"); }
+      else{ cancelBtn.textContent="Araç İptal"; cancelBtn.classList.remove("canceled"); }
+    }
+
+    approveBtn.addEventListener("click", () => {
+      const approved = isApproved();
+      if(!approved){
+        setApproved(true);
+        setCanceled(false);
+        refreshApproveUI(); refreshCancelUI();
+        return;
+      }
+      const ok = confirm("Bu aracın sevk onayını iptal etmek istediğine emin misin?");
+      if(!ok) return;
+      setApproved(false);
+      refreshApproveUI();
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      const canceled = isCanceled();
+      if(!canceled){
+        const ok = confirm("Bu araç gelmeyecek / iptal. Emin misin?");
+        if(!ok) return;
+        setCanceled(true);
+        setApproved(false);
+        refreshCancelUI(); refreshApproveUI();
+        return;
+      }
+      const ok = confirm("Bu aracın iptalini kaldırıp tekrar aktif etmek istiyor musun?");
+      if(!ok) return;
+      setCanceled(false);
+      refreshCancelUI();
+    });
+
+    render();
+  </script>
+</body>
+</html>
